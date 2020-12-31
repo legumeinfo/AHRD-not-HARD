@@ -1,3 +1,4 @@
+#!/usr/bin/env perl
 # Blast/AHRD annotator
 # Runs blastp against specified databases; runs AHRD to collect results; 
 #	reports final table including AHRD and best-blast-hit outputs
@@ -15,34 +16,25 @@ use YAML::XS;
 #		(Blast database paths are read from there)
 
 ## Set parameter/path values here:
-my $threads 	= 5;
-my $eval_thresh	=  1E-3;
-my $blastdir  	= "/opt/blast/default/bin";
-my $java_path 	= "/usr/local/bin/java";
-my $ahrd_jar 	= "ahrd/ahrd.jar";
+my $threads 	= $ENV{ANNOT_BLAST_THREADS} // 1;
+my $eval_thresh	= $ENV{ANNOT_BLAST_EVALUE} // 1E-3;
+my $ahrd_jar 	= "/app/ahrd.jar";
+
+# preemptively set for blast >= 2.11.0
+$ENV{BLAST_USAGE_REPORT} = "false";
 ##############################################################################
 
 check_args();
+my $output_prefix = shift;
 my $input_file = shift;
-
-check_file("AHRD jar", $ahrd_jar);
-check_file("Java executable", $java_path);
-check_file("blastp", "$blastdir/blastp");
 
 my %blast_dbs;
 my $yml_text = yml_text();
 my $ymlh = Load($yml_text); 
 
-check_yml($ymlh,\%blast_dbs); 
+check_yml($ymlh,\%blast_dbs);
 
-# Output files will be named using the input file minus extension and path
-my $nameroot = $input_file;
-$nameroot =~ s/\.[^\.]*$//; # chop extension 
-$nameroot =~ s/.*\///; # chop path
-
-mkdir("working");
-system("rm -f working/$nameroot.*");
-my $cleaned_path = "working/$nameroot.cleaned";
+my $cleaned_path = "$output_prefix.cleaned";
 my $nqueries = check_clean_input_file($input_file,$cleaned_path);
 
 my %blast_best_hits;
@@ -50,40 +42,35 @@ my %blast_best_evals;
 foreach my $key (keys %blast_dbs)
 {
 	my $dbpath = $blast_dbs{$key};
-	my $outfile = "working/$nameroot.$key.blast";	
-	unlink $outfile;
-	my $cmd = "$blastdir/blastp -db $dbpath -query $cleaned_path -out $outfile -outfmt 6 -num_threads $threads -evalue $eval_thresh ";
+	my $outfile = "$output_prefix.$key.blast";	
+	my $cmd = "blastp -db $dbpath -query $cleaned_path -out $outfile -outfmt 6 -num_threads $threads -evalue $eval_thresh ";
 	msgout("Run blast ($key) : $threads threads, evalue $eval_thresh");
-	system($cmd);
-	if (not -f $outfile)
-	{
-		die ("Blast $key failed\nCommand was:\n$cmd");
-	}
+	system($cmd) == 0 or die ("Blast $key failed\nCommand was:\n$cmd");
 	$ymlh->{blast_dbs}->{$key}->{file} = $outfile;
 	my $nhits = parse_blast($outfile,\%blast_best_hits,\%blast_best_evals);
 	print "$nhits hits found\n";
 }
 
-my $ahrd_outpath = "working/$nameroot.ahrd";
+my $ahrd_outpath = "$output_prefix.ahrd";
 unlink $ahrd_outpath;
 
 $ymlh->{proteins_fasta} = $cleaned_path;
 $ymlh->{output} = $ahrd_outpath;
 
 $yml_text = Dump($ymlh);
-open F, ">working/ahrd.yml" or die "Can't create working/ahrd.yml";
+open F, ">$output_prefix.ahrd.yml" or die "Can't create $output_prefix.ahrd.yml";
 print F $yml_text;
 close F;
 
 msgout("Running AHRD");
-my $ahrd_cmd = "$java_path -Xmx2g -jar $ahrd_jar working/ahrd.yml";
-system("$ahrd_cmd > working/ahrd.tmp 2>&1");
+my $ahrd_cmd = "java -Xmx2g -jar $ahrd_jar $output_prefix.ahrd.yml";
+system("$ahrd_cmd > $output_prefix.ahrd.tmp 2>&1");
 
 if (not -f $ahrd_outpath)
 {
 	die ("AHRD failed (no output file)!");	
 }
-my $final_outpath = "working/$nameroot.results.tbl";
+my $final_outpath = "$output_prefix.results.tbl";
 my $nhits = create_final_output($final_outpath,$ahrd_outpath,\%blast_best_hits,\%blast_best_evals);
 
 msgout("Result: $final_outpath\n$nhits of $nqueries queries had hits");
@@ -95,10 +82,6 @@ sub check_clean_input_file
 {
 	my $path = shift;
 	my $cleanpath = shift;
-	if (not -f $path)
-	{
-		die ("Can't find input file $path");
-	}
 	# Verify the file is fasta, looks like protein, and has reasonable names
 
 	# First load in all the sequences 
@@ -153,14 +136,12 @@ sub check_clean_input_file
 	{
 		print join("\n", @bad_seqs);
 		print "\nThe $num_bad sequences above do not look like protein sequences.\n";
-		yesno("Continue?");
 	}
 	print "$nseqs sequences found, total length $totallen\n";
 	if ($total_changed_chars > 0)
 	{
 		print "$total_changed_chars characters were changed to X\n";
 	}
-	yesno("Continue?");
 	msgout("Begin annotation");
 
 	print "Write cleaned sequences ($cleanpath)\n";
@@ -176,33 +157,6 @@ sub check_clean_input_file
 	close F;
 
 	return $nseqs;
-}
-
-##############################################################################
-
-sub yesno
-{
-	my $prompt = shift;
-	print "$prompt (y/n)\n";
-	my $choice = <STDIN>;
-	chomp($choice);
-	if ($choice ne "y")
-	{
-		print "Goodbye\n";
-		exit(0);
-	}
-}
-
-##############################################################################
-
-sub check_file
-{
-	my $key = shift;
-	my $path = shift;
-	if (not -f $path)
-	{
-		die ("Can't find $key file $path");
-	}
 }
 
 ##############################################################################
@@ -235,9 +189,9 @@ sub usage
 	print <<END;
 
 Usage: 
-perl annot.pl <input fasta protein file>
+perl annot.pl PREFIX FASTA_PROTEIN_FILE
 
-Output: annotation table with extension .tbl
+Output: annotation table at PREFIX.tbl
 
 END
 exit(0);
@@ -247,7 +201,7 @@ exit(0);
 
 sub check_args
 {
-	if (scalar(@ARGV) != 1)
+	if (scalar(@ARGV) != 2)
 	{
 		usage();
 	}
@@ -274,9 +228,9 @@ sub check_yml
 				$fpath =~ s/\s*//g;
 				if ($fpath ne "~" and $fpath ne "")
 				{
-					if (not -f $fpath)
+					if (not -R $fpath)
 					{
-						die("Can't find AHRD $type file for blast $key");
+						die("Can't access AHRD $type file for blast $key");
 					}
 				}
 			}
@@ -373,8 +327,8 @@ sub create_final_output
 sub yml_text
 {
 	my $text = <<'END_TEXT';
-proteins_fasta: 
-output: 
+proteins_fasta: # leave empty
+output: /dev/stdout
 token_score_bit_score_weight: 0.468
 token_score_database_score_weight: 0.2098
 token_score_overlap_score_weight: 0.3221
@@ -382,32 +336,32 @@ blast_dbs:
   refseq_soy:
     weight: 653
     description_score_bit_score_weight: 2.717061
-    file: 
+    file: # leave empty
     fasta_header_regex: ^>(?<accession>\S+)\s+(?<description>[^\[]+)\[.*?$
-    database: dbs/soy/Glyma.refseq_protein.fasta
-    blacklist: dbs/soy_descline_blacklist.txt
-    filter: dbs/empty.txt
-    token_blacklist: dbs/blacklist_token.txt
+    database: /data/GCF_000004515.5_Glycine_max_v2.1_protein.faa
+    blacklist: /app/conf/soy_descline_blacklist.txt
+    filter: /dev/null
+    token_blacklist: /app/conf/blacklist_token.txt
 
   TAIR10:
     weight: 653
     description_score_bit_score_weight: 2.717061
-    file: 
+    file: # leave empty
     fasta_header_regex: '^>(?<accession>\S+)\s*\|[^\|]+\|\s*(?<description>[^\|]+)\s*\|.*$'
-    database: dbs/arab/TAIR10_pep_20101209
-    blacklist: dbs/empty.txt
-    filter: dbs/empty.txt
-    token_blacklist: dbs/blacklist_token.txt
+    database: /data/TAIR10_pep_20101214
+    blacklist: /dev/null
+    filter: /dev/null
+    token_blacklist: /app/conf/blacklist_token.txt
 
-  Mt40v1:
+  Mt40v2:
     weight: 854
     description_score_bit_score_weight: 2.917405
-    file:
-    database: dbs/medicago/Mt4.0v1_GenesProteinSeq_20130731_1800.fasta
+    file: # leave empty
+    database: /data/Mt4.0v2_GenesProteinSeq_20140818_1100.fasta
     fasta_header_regex: '^>(?<accession>\S+)\s*\|\s*(?<description>[^\|]+)\s*\|.*$'
-    blacklist: dbs/med_descline_blacklist.txt
-    filter: dbs/empty.txt
-    token_blacklist: dbs/blacklist_token.txt
+    blacklist: /app/conf/med_descline_blacklist.txt
+    filter: /dev/null
+    token_blacklist: /app/conf/blacklist_token.txt
 END_TEXT
 	return $text;
 }
