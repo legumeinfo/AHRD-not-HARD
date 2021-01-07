@@ -1,0 +1,53 @@
+shell_script: ${ANALYSIS_DATA_ROOT}/AHRD/batcher.bash
+ahrd_call: "java -Xmx2048m -jar ${AHRD_GIT_ROOT}/bin/ahrd.jar #batch#"
+
+proteins_dir: ${ANALYSIS_DATA_ROOT}/chunks
+batch_ymls_dir: ${ANALYSIS_DATA_ROOT}/AHRD/batch_yml
+
+token_score_bit_score_weight: 0.5
+token_score_database_score_weight: 0.3
+token_score_overlap_score_weight: 0.2
+description_score_relative_description_frequency_weight: 0.6
+#no_start_positions_in_parameter_space: 10
+
+blast_dbs:
+  glyma:
+    dir: ${ANALYSIS_DATA_ROOT}/blastp/glyma
+    weight: 100
+    blacklist: ${AHRD_CONFIG_OVERRIDE_ROOT}/glyma_blacklist_descline.txt
+    filter: ${AHRD_GIT_ROOT}/resources/filter_descline_sprot.txt
+    token_blacklist: ${AHRD_GIT_ROOT}/resources/blacklist_token.txt
+    description_score_bit_score_weight: 0.4
+
+  arath:
+    dir: ${ANALYSIS_DATA_ROOT}/blastp/arath
+    weight: 100
+    blacklist: ${AHRD_GIT_ROOT}/resources/blacklist_descline.txt
+    filter: ${AHRD_GIT_ROOT}/resources/filter_descline_tair.txt
+    token_blacklist: ${AHRD_GIT_ROOT}/resources/blacklist_token.txt
+    description_score_bit_score_weight: 0.4
+
+  medtr:
+    dir: ${ANALYSIS_DATA_ROOT}/blastp/medtr
+    weight: 100
+    blacklist: ${AHRD_GIT_ROOT}/resources/blacklist_descline.txt
+    filter: ${AHRD_GIT_ROOT}/resources/filter_descline_trembl.txt
+    token_blacklist: ${AHRD_GIT_ROOT}/resources/blacklist_token.txt
+    description_score_bit_score_weight: 0.4
+ 
+  uniref90:
+    dir: ${ANALYSIS_DATA_ROOT}/blastp/uniref90
+    weight: 100
+    blacklist: ${AHRD_GIT_ROOT}/resources/blacklist_descline.txt
+    filter: ${AHRD_GIT_ROOT}/resources/filter_descline_trembl.txt
+    token_blacklist: ${AHRD_GIT_ROOT}/resources/blacklist_token.txt
+    description_score_bit_score_weight: 0.4
+
+interpro_results_dir: ${ANALYSIS_DATA_ROOT}/iprscan_raw
+#FIXME: make sure this is in sync with the version of iprscan used
+interpro_database: ${INTERPRO_DB_ROOT}/interpro.xml
+write_token_set_to_output: false
+write_best_blast_hits_to_output: false
+gene_ontology_results_dir: ${ANALYSIS_DATA_ROOT}/ipr2go
+#find_highest_possible_evaluation_score: true
+output_dir: ${ANALYSIS_DATA_ROOT}/AHRD
