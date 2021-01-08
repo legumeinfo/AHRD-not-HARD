@@ -1,3 +1,4 @@
-*
-!annot.pl
-!conf
+.dockerignore
+.git
+.gitignore
+Dockerfile

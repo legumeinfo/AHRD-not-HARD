@@ -20,7 +20,9 @@ FROM ubuntu:20.10
 
 RUN apt update && apt install -y --no-install-recommends \
   default-jre-headless \
+  hmmer \
   ncbi-blast+ \
+  libxml-simple-perl \
   libyaml-libyaml-perl \
   wget \
   && rm -rf /var/lib/apt/lists/*
