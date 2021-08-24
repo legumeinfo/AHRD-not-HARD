@@ -40,7 +40,9 @@ RUN cd /data && wget -O - https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_re
 RUN cd /data && makeblastdb -parse_seqids -dbtype prot -taxid 3847 -in GCF_000004515.5_Glycine_max_v2.1_protein.faa
 
 COPY --from=ahrd /usr/src/ahrd.jar /app/
-COPY annot.pl /app/
+COPY add_note_attr_inGFF.pl annot.pl clean_AHRD.sh /app/
 COPY conf/ /app/conf/
+
+ENV PATH=/app/:${PATH}
 
 ENTRYPOINT ["perl", "/app/annot.pl"]

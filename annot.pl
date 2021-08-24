@@ -27,6 +27,7 @@ $ENV{BLAST_USAGE_REPORT} = "false";
 check_args();
 my $output_prefix = shift;
 my $input_file = shift;
+my $input_gff = shift;
 
 my %blast_dbs;
 my $yml_text = yml_text();
@@ -74,6 +75,12 @@ my $final_outpath = "$output_prefix.results.tbl";
 my $nhits = create_final_output($final_outpath,$ahrd_outpath,\%blast_best_hits,\%blast_best_evals);
 
 msgout("Result: $final_outpath\n$nhits of $nqueries queries had hits");
+
+if (defined($input_gff)) {
+    my $output_gff = "$output_prefix.gff";
+    system("clean_AHRD.sh $ahrd_outpath | add_note_attr_inGFF.pl /dev/stdin $input_gff > $output_gff");
+    msgout("Annotated GFF: $output_gff")
+}
 
 
 ##############################################################################
@@ -189,9 +196,9 @@ sub usage
 	print <<END;
 
 Usage: 
-perl annot.pl PREFIX FASTA_PROTEIN_FILE
+perl annot.pl PREFIX FASTA_PROTEIN_FILE [GFF_FILE]
 
-Output: annotation table at PREFIX.tbl
+Output: annotation table at PREFIX.tbl (and optionally PREFIX.gff)
 
 END
 exit(0);
@@ -201,7 +208,7 @@ exit(0);
 
 sub check_args
 {
-	if (scalar(@ARGV) != 2)
+	if (scalar(@ARGV) != 2 && scalar(@ARGV) != 3)
 	{
 		usage();
 	}

@@ -23,6 +23,19 @@ $ docker run -it --rm -v $PWD:/mnt -w /mnt ahrd-not-hard output/myprot prot.fa
 Result: output/myprot.results.tbl
 ```
 
+Optionally, specify a GFF file to annotate.
+A "Note" attribute will be added to the 9th column of gene features in the output GFF.
+
+```sh
+$ mkdir output
+$ docker run -it --rm -v $PWD:/mnt -w /mnt ahrd-not-hard output/myprot prot.fa genes.gff
+...
+Result: output/myprot.results.tbl
+Annotated GFF: output/myprot.gff
+```
+
+*Note that the gene feature ID values in the GFF must match the seqids in the protein FASTA file.*
+
 ## Installation/Usage (Singularity Container)
 
 1. Follow the instructions to build a Docker container image
@@ -39,7 +52,7 @@ The resulting SIF file can be moved from /tmp/singularity/ahrd-not-hard-YYYY-MM-
 
 ```sh
 $ mkdir output
-$ singularity run --cleanenv ahrd-not-hard-2020-12-31-3fc4eeb9aa0e.sif output/myprot prot.fa
+$ singularity run --cleanenv ahrd-not-hard-2020-12-31-3fc4eeb9aa0e.sif output/myprot prot.fa genes.gff
 ```
 
 ## Environment Variables
