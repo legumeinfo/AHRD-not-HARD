@@ -343,12 +343,12 @@ blast_dbs:
     filter: /dev/null
     token_blacklist: /app/conf/blacklist_token.txt
 
-  TAIR10:
+  Araport11:
     weight: 653
     description_score_bit_score_weight: 2.717061
     file: # leave empty
-    fasta_header_regex: '^>(?<accession>\S+)\s*\|[^\|]+\|\s*(?<description>[^\|]+)\s*\|.*$'
-    database: /data/TAIR10_pep_20101214
+    fasta_header_regex: '^>(?<accession>\S+)\s*\|\s*(?<description>[^\|]+)\s*\|.*$'
+    database: /data/Araport11_genes.201606.pep.fasta
     blacklist: /dev/null
     filter: /dev/null
     token_blacklist: /app/conf/blacklist_token.txt

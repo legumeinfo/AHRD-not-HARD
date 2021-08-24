@@ -1,5 +1,4 @@
-# using most-recent ubuntu release to get a recent NCBI BLAST
-FROM ubuntu:20.10 AS ahrd
+FROM debian:bullseye AS ahrd
 
 RUN apt update && apt install -y --no-install-recommends \
   ant \
@@ -16,7 +15,7 @@ RUN tar -xzf v${AHRD_VERSION}.tar.gz \
   && cd .. \
   && rm -rf AHRD-${AHRD_VERSION}
 
-FROM ubuntu:20.10
+FROM debian:bullseye
 
 RUN apt update && apt install -y --no-install-recommends \
   default-jre-headless \
@@ -31,8 +30,8 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # not using WORKDIR /data, as when it is set, docker2singularity creates an image with "cd WORKDIR" in the runscript
 RUN mkdir /data
-RUN cd /data && wget https://www.arabidopsis.org/download_files/Proteins/TAIR10_protein_lists/TAIR10_pep_20101214
-RUN cd /data && makeblastdb -parse_seqids -dbtype prot -taxid 3702 -in TAIR10_pep_20101214
+RUN cd /data && wget -O - https://www.arabidopsis.org/download_files/Proteins/Araport11_protein_lists/Araport11_genes.201606.pep.fasta.gz | gzip -dc > Araport11_genes.201606.pep.fasta
+RUN cd /data && makeblastdb -parse_seqids -dbtype prot -taxid 3702 -in Araport11_genes.201606.pep.fasta
 
 RUN cd /data && wget https://de.cyverse.org/anon-files/iplant/home/mtruncatula/public/Mt4.0/Annotation/Mt4.0v2/Mt4.0v2_GenesProteinSeq_20140818_1100.fasta 
 RUN cd /data && makeblastdb -parse_seqids -dbtype prot -taxid 3880 -in Mt4.0v2_GenesProteinSeq_20140818_1100.fasta
@@ -41,6 +40,7 @@ RUN cd /data && wget -O - https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_re
 RUN cd /data && makeblastdb -parse_seqids -dbtype prot -taxid 3847 -in GCF_000004515.5_Glycine_max_v2.1_protein.faa
 
 COPY --from=ahrd /usr/src/ahrd.jar /app/
-COPY . /app/
+COPY annot.pl /app/
+COPY conf/ /app/conf/
 
 ENTRYPOINT ["perl", "/app/annot.pl"]
