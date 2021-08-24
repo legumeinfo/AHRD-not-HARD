@@ -64,7 +64,7 @@ print F $yml_text;
 close F;
 
 msgout("Running AHRD");
-my $ahrd_cmd = "java -Xmx2g -jar $ahrd_jar $output_prefix.ahrd.yml";
+my $ahrd_cmd = "java -jar $ahrd_jar $output_prefix.ahrd.yml";
 system("$ahrd_cmd > $output_prefix.ahrd.tmp 2>&1");
 
 if (not -f $ahrd_outpath)
