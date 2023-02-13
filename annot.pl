@@ -338,7 +338,7 @@ blast_dbs:
     description_score_bit_score_weight: 2.717061
     file: # leave empty
     fasta_header_regex: ^>(?<accession>\S+)\s+(?<description>[^\[]+)\[.*?$
-    database: /data/GCF_000004515.5_Glycine_max_v2.1_protein.faa
+    database: /data/GCF_000004515.6_Glycine_max_v4.0_protein.faa
     blacklist: /app/conf/soy_descline_blacklist.txt
     filter: /dev/null
     token_blacklist: /app/conf/blacklist_token.txt
@@ -348,7 +348,7 @@ blast_dbs:
     description_score_bit_score_weight: 2.717061
     file: # leave empty
     fasta_header_regex: '^>(?<accession>\S+)\s*\|[^\|]+\|\s*(?<description>[^\|]+)\s*\|.*$'
-    database: /data/TAIR10_pep_20101214
+    database: /data/Araport11_pep_20220914
     blacklist: /dev/null
     filter: /dev/null
     token_blacklist: /app/conf/blacklist_token.txt

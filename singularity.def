@@ -1,0 +1,48 @@
+Bootstrap: library
+From: ubuntu:22.04
+Stage: ahrd
+
+%post
+    readonly AHRD_VERSION=3.3.3
+
+    apt update
+    apt install -y --no-install-recommends ant default-jdk-headless wget
+    bash -o pipefail -c "wget -O - https://github.com/groupschoof/AHRD/archive/refs/tags/v${AHRD_VERSION}.tar.gz | tar -C /usr/src -xzf -"
+    cd /usr/src/AHRD-${AHRD_VERSION}
+    ant dist
+    mv dist/ahrd.jar /usr/src
+
+Bootstrap: library
+From: ubuntu:22.04
+Stage: final
+
+%files from ahrd
+    /usr/src/ahrd.jar /app/
+
+%files
+    ./annot.pl /app/annot.pl
+    ./conf /app/conf    
+
+%post
+    apt update
+    apt install -y --no-install-recommends default-jre-headless ncbi-blast+ libyaml-libyaml-perl wget
+    rm -rf /var/lib/apt/lists/*
+
+    mkdir /data
+    cd /data
+    
+    # ignore makeblastdb "Bad char [0xB3] in string at byte 97" warnings; sequences are still included in blast DB
+    bash -o pipefail -c 'wget -O - https://www.arabidopsis.org/download_files/Proteins/Araport11_protein_lists/Araport11_pep_20220914.gz | gzip -dc > Araport11_pep_20220914'
+    makeblastdb -parse_seqids -dbtype prot -taxid 3702 -in Araport11_pep_20220914
+
+    wget https://de.cyverse.org/anon-files/iplant/home/mtruncatula/public/Mt4.0/Annotation/Mt4.0v2/Mt4.0v2_GenesProteinSeq_20140818_1100.fasta
+    makeblastdb -parse_seqids -dbtype prot -taxid 3880 -in Mt4.0v2_GenesProteinSeq_20140818_1100.fasta
+
+    bash -o pipefail -c 'wget -O - https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/3847/104/GCF_000004515.6_Glycine_max_v4.0/GCF_000004515.6_Glycine_max_v4.0_protein.faa.gz | gzip -dc > GCF_000004515.6_Glycine_max_v4.0_protein.faa'
+    makeblastdb -parse_seqids -dbtype prot -taxid 3847 -in GCF_000004515.6_Glycine_max_v4.0_protein.faa
+    
+%environment
+    export LC_ALL=C
+
+%runscript
+    perl /app/annot.pl "$@"
