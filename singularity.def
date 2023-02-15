@@ -25,20 +25,22 @@ Stage: final
 
 %post
     apt update
-    apt install -y --no-install-recommends default-jre-headless ncbi-blast+ libyaml-libyaml-perl wget
+    apt install -y --no-install-recommends busybox default-jre-headless ncbi-blast+ libyaml-libyaml-perl
     rm -rf /var/lib/apt/lists/*
 
     mkdir /data
     cd /data
     
     # ignore makeblastdb "Bad char [0xB3] in string at byte 97" warnings; sequences are still included in blast DB
-    bash -o pipefail -c 'wget -O - https://www.arabidopsis.org/download_files/Proteins/Araport11_protein_lists/Araport11_pep_20220914.gz | gzip -dc > Araport11_pep_20220914'
+    bash -o pipefail -c 'busybox wget -O - https://www.arabidopsis.org/download_files/Proteins/Araport11_protein_lists/Araport11_pep_20220914.gz | gzip -dc > Araport11_pep_20220914'
     makeblastdb -parse_seqids -dbtype prot -taxid 3702 -in Araport11_pep_20220914
 
-    bash -o pipefail -c 'wget -O - https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/3880/102/GCF_003473485.1_MtrunA17r5.0-ANR/GCF_003473485.1_MtrunA17r5.0-ANR_protein.faa.gz | gzip -dc > GCF_003473485.1_MtrunA17r5.0-ANR_protein.faa'
-    makeblastdb -parse_seqids -dbtype prot -taxid 3880 -in GCF_003473485.1_MtrunA17r5.0-ANR_protein.faa
+    # busybox unzip can extract from stdin: https://stackoverflow.com/a/52759718
+    # handle SIGPIPE with: https://stackoverflow.com/a/22464942
+    bash -o pipefail -c '(trap "" PIPE; busybox wget -O - https://medicago.toulouse.inra.fr/MtrunA17r5.0-ANR/downloads/1.9/20220708_MtrunA17r5.0-ANR-EGN-r1.9_Annotation.zip) | busybox unzip -p /dev/stdin 20220708_MtrunA17r5.0-ANR-EGN-r1.9_FunctionalAnnotation/fasta/MtrunA17r5.0-ANR-EGN-r1.9.prot.fasta > MtrunA17r5.0-ANR-EGN-r1.9.prot.fasta'
+    makeblastdb -parse_seqids -dbtype prot -taxid 3880 -in MtrunA17r5.0-ANR-EGN-r1.9.prot.fasta
 
-    bash -o pipefail -c 'wget -O - https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/3847/104/GCF_000004515.6_Glycine_max_v4.0/GCF_000004515.6_Glycine_max_v4.0_protein.faa.gz | gzip -dc > GCF_000004515.6_Glycine_max_v4.0_protein.faa'
+    bash -o pipefail -c 'busybox wget -O - https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/3847/104/GCF_000004515.6_Glycine_max_v4.0/GCF_000004515.6_Glycine_max_v4.0_protein.faa.gz | gzip -dc > GCF_000004515.6_Glycine_max_v4.0_protein.faa'
     makeblastdb -parse_seqids -dbtype prot -taxid 3847 -in GCF_000004515.6_Glycine_max_v4.0_protein.faa
     
 %environment

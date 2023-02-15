@@ -357,8 +357,8 @@ blast_dbs:
     weight: 854
     description_score_bit_score_weight: 2.917405
     file: # leave empty
-    database: /data/GCF_003473485.1_MtrunA17r5.0-ANR_protein.faa
-    fasta_header_regex: ^>(?<accession>\S+)\s+(?<description>[^\[]+)\[.*?$
+    database: /data/MtrunA17r5.0-ANR-EGN-r1.9.prot.fasta
+    fasta_header_regex: ^>(?<accession>\S+)\s+.* def=(?<description>.+)$
     blacklist: /app/conf/med_descline_blacklist.txt
     filter: /dev/null
     token_blacklist: /app/conf/blacklist_token.txt
