@@ -35,8 +35,8 @@ Stage: final
     bash -o pipefail -c 'wget -O - https://www.arabidopsis.org/download_files/Proteins/Araport11_protein_lists/Araport11_pep_20220914.gz | gzip -dc > Araport11_pep_20220914'
     makeblastdb -parse_seqids -dbtype prot -taxid 3702 -in Araport11_pep_20220914
 
-    wget https://de.cyverse.org/anon-files/iplant/home/mtruncatula/public/Mt4.0/Annotation/Mt4.0v2/Mt4.0v2_GenesProteinSeq_20140818_1100.fasta
-    makeblastdb -parse_seqids -dbtype prot -taxid 3880 -in Mt4.0v2_GenesProteinSeq_20140818_1100.fasta
+    bash -o pipefail -c 'wget -O - https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/3880/102/GCF_003473485.1_MtrunA17r5.0-ANR/GCF_003473485.1_MtrunA17r5.0-ANR_protein.faa.gz | gzip -dc > GCF_003473485.1_MtrunA17r5.0-ANR_protein.faa'
+    makeblastdb -parse_seqids -dbtype prot -taxid 3880 -in GCF_003473485.1_MtrunA17r5.0-ANR_protein.faa
 
     bash -o pipefail -c 'wget -O - https://ftp.ncbi.nlm.nih.gov/genomes/all/annotation_releases/3847/104/GCF_000004515.6_Glycine_max_v4.0/GCF_000004515.6_Glycine_max_v4.0_protein.faa.gz | gzip -dc > GCF_000004515.6_Glycine_max_v4.0_protein.faa'
     makeblastdb -parse_seqids -dbtype prot -taxid 3847 -in GCF_000004515.6_Glycine_max_v4.0_protein.faa

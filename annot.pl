@@ -353,12 +353,12 @@ blast_dbs:
     filter: /dev/null
     token_blacklist: /app/conf/blacklist_token.txt
 
-  Mt40v2:
+  MtrunA17r5.0:
     weight: 854
     description_score_bit_score_weight: 2.917405
     file: # leave empty
-    database: /data/Mt4.0v2_GenesProteinSeq_20140818_1100.fasta
-    fasta_header_regex: '^>(?<accession>\S+)\s*\|\s*(?<description>[^\|]+)\s*\|.*$'
+    database: /data/GCF_003473485.1_MtrunA17r5.0-ANR_protein.faa
+    fasta_header_regex: ^>(?<accession>\S+)\s+(?<description>[^\[]+)\[.*?$
     blacklist: /app/conf/med_descline_blacklist.txt
     filter: /dev/null
     token_blacklist: /app/conf/blacklist_token.txt

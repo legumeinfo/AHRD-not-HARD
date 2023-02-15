@@ -20,7 +20,7 @@ e.g., given the input protein FASTA file prot.fa:
 
 ```sh
 $ mkdir output
-$ singularity run --cleanenv ahrd-not-hard_2020-12-31.sif output/myprot prot.fa
+$ singularity run --cleanenv ahrd-not-hard_<MY_VERSION>.sif output/myprot prot.fa
 ...
 Result: output/myprot.results.tbl
 ```
